@@ -17,7 +17,7 @@ healthcheckTimeout = 300
 depends_on = ["postgres", "nats"]
 
 [services.api.environment]
-DATABASE_URL = "${{Postgres.DATABASE_URL}}"
+DATABASE_URL = "${{postgres.DATABASE_URL}}"
 NATS_URL = "nats://nats:4222"
 API_PORT = "${{PORT}}"
 JWT_SECRET = "${{JWT_SECRET}}"
