@@ -1,0 +1,11 @@
+# Exclude agent directory from Railway deployment
+# The agent is Windows-only and should not be built on Railway
+agent/
+
+# Exclude other development and build files
+tools/
+docs/
+production/
+*.md
+!README.md
+!DEPLOYMENT_GUIDE.md
