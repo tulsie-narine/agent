@@ -17,7 +17,6 @@ healthcheckTimeout = 300
 depends_on = ["postgres", "nats"]
 
 [services.api.environment]
-DATABASE_URL = "postgres://inventory:inventory123@postgres:5432/inventory?sslmode=disable"
 NATS_URL = "nats://nats:4222"
 API_PORT = "8080"
 JWT_SECRET = "${{JWT_SECRET}}"

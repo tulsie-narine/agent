@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -19,8 +20,15 @@ type APIConfig struct {
 }
 
 func Load() (*APIConfig, error) {
+	dbURL := getEnv("DATABASE_URL", "postgres://inventory:inventory123@localhost:5432/inventory?sslmode=disable")
+	
+	// In Railway, replace localhost with postgres service name for inter-service communication
+	if strings.Contains(dbURL, "localhost") {
+		dbURL = strings.Replace(dbURL, "localhost", "postgres", 1)
+	}
+	
 	cfg := &APIConfig{
-		DatabaseURL:   getEnv("DATABASE_URL", "postgres://inventory:inventory123@localhost:5432/inventory?sslmode=disable"),
+		DatabaseURL:   dbURL,
 		NATSUrl:       getEnv("NATS_URL", "nats://localhost:4222"),
 		ServerPort:    getEnv("API_PORT", "8080"),
 		TLSCertFile:   getEnv("TLS_CERT_FILE", ""),

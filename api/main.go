@@ -37,10 +37,18 @@ func main() {
 
 	// Log database URL (mask password for security)
 	dbURL := cfg.DatabaseURL
-	if strings.Contains(dbURL, "@") {
-		parts := strings.Split(dbURL, "@")
-		if len(parts) == 2 {
-			log.Printf("Using DATABASE_URL: %s@%s", strings.Split(parts[0], ":")[0]+":***", parts[1])
+	if strings.Contains(dbURL, "://") && strings.Contains(dbURL, "@") {
+		// Parse postgres://user:pass@host:port/db
+		protocolEnd := strings.Index(dbURL, "://")
+		atIndex := strings.Index(dbURL, "@")
+		if protocolEnd != -1 && atIndex != -1 {
+			protocol := dbURL[:protocolEnd+3] // "postgres://"
+			userPass := dbURL[protocolEnd+3 : atIndex] // "user:pass"
+			hostAndRest := dbURL[atIndex+1:] // "host:port/db?params"
+			user := strings.Split(userPass, ":")[0]
+			log.Printf("Using DATABASE_URL: %s%s:***@%s", protocol, user, hostAndRest)
+		} else {
+			log.Printf("Using DATABASE_URL: %s", dbURL)
 		}
 	} else {
 		log.Printf("Using DATABASE_URL: %s", dbURL)
