@@ -35,6 +35,15 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
+	// Debug: Log all PG* and DATABASE* environment variables
+	log.Println("=== Environment Variables ===")
+	for _, env := range os.Environ() {
+		if strings.HasPrefix(env, "PG") || strings.HasPrefix(env, "DATABASE") || strings.Contains(env, "PORT") {
+			log.Printf("ENV: %s", env)
+		}
+	}
+	log.Println("=== End Environment Variables ===")
+
 	// Log database URL (mask password for security)
 	dbURL := cfg.DatabaseURL
 	if strings.Contains(dbURL, "://") && strings.Contains(dbURL, "@") {
