@@ -35,6 +35,17 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
+	// Log database URL (mask password for security)
+	dbURL := cfg.DatabaseURL
+	if strings.Contains(dbURL, "@") {
+		parts := strings.Split(dbURL, "@")
+		if len(parts) == 2 {
+			log.Printf("Using DATABASE_URL: %s@%s", strings.Split(parts[0], ":")[0]+":***", parts[1])
+		}
+	} else {
+		log.Printf("Using DATABASE_URL: %s", dbURL)
+	}
+
 	// Initialize database
 	db, err := database.Connect(cfg.DatabaseURL)
 	if err != nil {
