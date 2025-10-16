@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Device } from '@/types'
-import { apiClient } from '@/lib/api/client'
-import { formatDate, formatRelativeTime, getDeviceStatus } from '@/lib/utils'
+import type { Device } from '../../types/index'
+import { apiClient } from '../../lib/api/client'
+import { formatDate, formatRelativeTime, getDeviceStatus } from '../../lib/utils/index'
 
 export function DeviceList() {
   const [devices, setDevices] = useState<Device[]>([])

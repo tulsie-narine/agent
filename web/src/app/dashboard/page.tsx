@@ -1,11 +1,8 @@
-import { Metadata } from 'next'
-import { DashboardStats } from '@/components/dashboard/DashboardStats'
-import { DeviceList } from '@/components/dashboard/DeviceList'
-import { RecentActivity } from '@/components/dashboard/RecentActivity'
+'use client'
 
-export const metadata: Metadata = {
-  title: 'Dashboard - Inventory Console',
-}
+import { DashboardStats } from '../../components/dashboard/DashboardStats'
+import { DeviceList } from '../../components/dashboard/DeviceList'
+import { RecentActivity } from '../../components/dashboard/RecentActivity'
 
 export default function DashboardPage() {
   return (

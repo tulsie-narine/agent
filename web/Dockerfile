@@ -1,52 +1,53 @@
-# Build stage
-FROM node:20-alpine AS builder
+# syntax=docker/dockerfile:1
 
-# Set working directory
+ARG NODE_VERSION=22.13.1
+
+# --- Builder stage ---
+FROM node:${NODE_VERSION}-slim AS builder
 WORKDIR /app
-
-# Copy package files
-COPY package.json package-lock.json* ./
 
 # Install dependencies
-RUN npm install
+COPY --link package.json .
+COPY --link package-lock.json* .
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci || npm install
 
-# Copy source code
-COPY . .
+# Copy the entire application source (including tsconfig.json, next.config.js)
+COPY --link . .
 
-# Build the Next.js application
+# Ensure .next cache is clean for fresh build
+RUN rm -rf .next .cache 2>/dev/null || true
+
+# Build the application (Next.js/TypeScript)
 RUN npm run build
 
-# Runtime stage
-FROM node:20-alpine
+# Remove dev dependencies to reduce image size
+RUN npm prune --production
 
-# Install dumb-init for signal handling
-RUN apk add --no-cache dumb-init
-
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
-
-# Set working directory
+# --- Production stage ---
+FROM node:${NODE_VERSION}-slim AS final
 WORKDIR /app
 
-# Copy built application from builder
-COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
-COPY --from=builder --chown=nextjs:nodejs /app/next.config.js ./next.config.js
+# Create a non-root user
+RUN addgroup --system --gid 1001 appgroup && \
+    adduser --system --uid 1001 --ingroup appgroup appuser
 
-# Expose port
+# Copy only the necessary files from builder
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/next.config.js ./next.config.js
+COPY --from=builder /app/tailwind.config.js ./tailwind.config.js
+COPY --from=builder /app/postcss.config.js ./postcss.config.js
+
+# If you have any other static/config files needed at runtime, copy them here
+
+ENV NODE_ENV=production
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
+USER appuser
+
 EXPOSE 3000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1
-
-# Switch to non-root user
-USER nextjs
-
-# Use dumb-init to handle signals properly
-ENTRYPOINT ["dumb-init", "--"]
-
-# Start the application
 CMD ["npm", "start"]

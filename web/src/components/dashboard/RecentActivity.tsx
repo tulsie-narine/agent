@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Command } from '@/types'
-import { apiClient } from '@/lib/api/client'
-import { formatRelativeTime } from '@/lib/utils'
+import type { Command } from '../../types/index'
+import { apiClient } from '../../lib/api/client'
+import { formatRelativeTime } from '../../lib/utils/index'
 
 interface ActivityItem {
   id: string

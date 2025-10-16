@@ -1,53 +1,49 @@
-# Build stage
-FROM golang:1.22-alpine AS builder
+# syntax=docker/dockerfile:1
 
-# Install build dependencies
-RUN apk add --no-cache git ca-certificates tzdata
+# ----------- Build Stage -----------
+ARG GO_VERSION=1.22.1
+FROM golang:${GO_VERSION}-alpine AS builder
 
-# Set working directory
 WORKDIR /app
 
-# Copy go mod files
-COPY go.mod go.sum ./
+# Install build dependencies
+RUN apk add --no-cache git
 
-# Download dependencies
-RUN go mod download
+# Copy go.mod and go.sum first for dependency caching
+COPY --link go.mod go.sum ./
 
-# Copy source code
-COPY . .
+# Download dependencies (using cache mounts for speed)
+RUN --mount=type=cache,target=/go/pkg/mod \
+    go mod download
 
-# Build the binary with static linking
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./main.go
+# Copy the rest of the source code
+COPY --link . .
 
-# Final stage
-FROM alpine:latest
+# Build the Go binary (static build, strip debug info)
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o api-server ./main.go
 
-# Install ca-certificates for HTTPS calls
-RUN apk --no-cache add ca-certificates tzdata
+# ----------- Final Stage -----------
+FROM alpine:latest AS final
+
+# Install runtime dependencies
+RUN apk add --no-cache ca-certificates
 
 # Create non-root user
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
-WORKDIR /root/
+WORKDIR /app
 
-# Copy the binary from builder stage
-COPY --from=builder /app/main .
+# Copy the built binary from builder
+COPY --from=builder /app/api-server ./api-server
 
-# Copy migrations directory if it exists
+# Copy migrations (if needed at runtime)
 COPY --from=builder /app/internal/database/migrations ./internal/database/migrations
 
-# Change ownership to non-root user
-RUN chown -R appuser:appgroup /root/
-
-# Switch to non-root user
-USER appuser
-
-# Expose port
+# Expose the default port (update if your app uses a different port)
 EXPOSE 8080
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
+USER appuser
 
-# Run the binary
-CMD ["./main"]
+# Entrypoint
+CMD ["./api-server"]

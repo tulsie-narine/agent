@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios'
-import { ApiResponse, PaginatedResponse, Device, DeviceStats, TelemetryData, TelemetryQuery, Policy, Command } from '@/types'
+import { ApiResponse, PaginatedResponse, Device, DeviceStats, TelemetryData, TelemetryQuery, Policy, Command } from '../../types/index'
 
 class ApiClient {
   private client: AxiosInstance

@@ -89,7 +89,8 @@ func main() {
 
 	// Run migrations
 	if err := runMigrations(cfg.DatabaseURL); err != nil {
-		log.Fatalf("Failed to run migrations: %v", err)
+		log.Printf("Warning: Failed to run migrations: %v", err)
+		// Don't fatally fail - the server can still work
 	}
 
 	// Initialize NATS

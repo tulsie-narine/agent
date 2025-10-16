@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { DeviceStats } from '@/types'
-import { apiClient } from '@/lib/api/client'
-import { formatNumber } from '@/lib/utils'
+import type { DeviceStats } from '../../types/index'
+import { apiClient } from '../../lib/api/client'
+import { formatNumber } from '../../lib/utils/index'
 
 export function DashboardStats() {
   const [stats, setStats] = useState<DeviceStats | null>(null)
