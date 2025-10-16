@@ -11,8 +11,9 @@ healthcheckTimeout = 300
 
 [[services]]
 name = "api"
+builder = "dockerfile"
+dockerfilePath = "./api/Dockerfile"
 source = { path = "./api" }
-build = { builder = "dockerfile", dockerfilePath = "Dockerfile" }
 healthcheckPath = "/health"
 healthcheckTimeout = 300
 
