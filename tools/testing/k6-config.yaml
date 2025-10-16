@@ -1,0 +1,112 @@
+# Windows Inventory Agent Load Testing Configuration
+
+# Test Scenarios
+scenarios:
+  # Standard load test
+  standard_load:
+    executor: 'ramping-vus'
+    stages:
+      - duration: '2m'
+        target: 10
+      - duration: '5m'
+        target: 50
+      - duration: '10m'
+        target: 100
+      - duration: '5m'
+        target: 100
+      - duration: '2m'
+        target: 0
+    tags:
+      test_type: 'load'
+
+  # Stress test
+  stress_test:
+    executor: 'ramping-vus'
+    stages:
+      - duration: '1m'
+        target: 20
+      - duration: '3m'
+        target: 100
+      - duration: '5m'
+        target: 200
+      - duration: '3m'
+        target: 200
+      - duration: '1m'
+        target: 0
+    tags:
+      test_type: 'stress'
+
+  # Spike test
+  spike_test:
+    executor: 'ramping-vus'
+    stages:
+      - duration: '10s'
+        target: 10
+      - duration: '30s'
+        target: 500
+      - duration: '1m'
+        target: 500
+      - duration: '30s'
+        target: 10
+      - duration: '10s'
+        target: 0
+    tags:
+      test_type: 'spike'
+
+  # Endurance test
+  endurance_test:
+    executor: 'constant-vus'
+    vus: 50
+    duration: '30m'
+    tags:
+      test_type: 'endurance'
+
+# Test Options
+options:
+  # Performance thresholds
+  thresholds:
+    http_req_duration:
+      - 'p(95)<500'  # 95% of requests should be below 500ms
+      - 'p(99)<1000' # 99% of requests should be below 1000ms
+    http_req_failed:
+      - 'rate<0.05'  # Error rate should be below 5%
+    telemetry_duration:
+      - 'p(95)<200'  # Telemetry operations should be fast
+    policy_duration:
+      - 'p(95)<100'  # Policy operations should be very fast
+    command_duration:
+      - 'p(95)<150'  # Command operations should be fast
+
+  # System resource limits
+  systemTags:
+    - method
+    - url
+    - status
+    - error
+    - check
+
+  # External services
+  ext:
+    loadimpact:
+      projectID: 123456  # Replace with actual project ID
+      name: 'Windows Inventory Agent Load Test'
+
+# Environment Variables
+environment:
+  BASE_URL: 'http://localhost:8080/api/v1'
+  AUTH_TOKEN: 'test-token'  # Replace with actual token for authenticated tests
+
+# Output configuration
+outputs:
+  - 'json=results/load-test-results.json'
+  - 'influxdb=http://localhost:8086/k6'
+
+# Custom summary
+summaryTrendStats:
+  - avg
+  - min
+  - med
+  - max
+  - 'p(90)'
+  - 'p(95)'
+  - 'p(99)'

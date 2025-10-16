@@ -1,0 +1,16 @@
+{
+  "device_id": "",
+  "api_endpoint": "https://api.example.com",
+  "auth_token": "",
+  "collection_interval": "15m",
+  "enabled_metrics": {
+    "os.info": true
+  },
+  "local_output_path": "C:\\ProgramData\\InventoryAgent\\inventory.json",
+  "log_level": "info",
+  "retry_config": {
+    "max_retries": 5,
+    "backoff_multiplier": 2.0,
+    "max_backoff": "5m"
+  }
+}

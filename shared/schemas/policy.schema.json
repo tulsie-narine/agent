@@ -1,0 +1,410 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://inventory-agent.com/schemas/policy/v1.0.0",
+  "title": "Policy Configuration Schema",
+  "description": "Schema for validating policy configurations distributed to Windows inventory agents",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique policy identifier"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "Human-readable policy name"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 500,
+      "description": "Policy description"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version of the policy"
+    },
+    "enabled": {
+      "type": "boolean",
+      "description": "Whether the policy is active",
+      "default": true
+    },
+    "priority": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100,
+      "description": "Policy priority (higher numbers take precedence)",
+      "default": 50
+    },
+    "target_filters": {
+      "type": "object",
+      "description": "Filters to determine which devices this policy applies to",
+      "properties": {
+        "hostname_pattern": {
+          "type": "string",
+          "description": "Regex pattern for hostname matching"
+        },
+        "os_version": {
+          "type": "string",
+          "description": "Required OS version (supports wildcards)"
+        },
+        "os_build_min": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+$",
+          "description": "Minimum OS build number"
+        },
+        "os_build_max": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+$",
+          "description": "Maximum OS build number"
+        },
+        "architecture": {
+          "type": "string",
+          "enum": ["x86", "x64", "arm", "arm64"],
+          "description": "Required system architecture"
+        },
+        "domain": {
+          "type": "string",
+          "description": "Required domain name"
+        },
+        "group_tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "description": "Device group tags that must be present"
+        },
+        "custom_properties": {
+          "type": "object",
+          "description": "Custom property filters",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "content": {
+      "type": "object",
+      "description": "Policy configuration content",
+      "properties": {
+        "telemetry": {
+          "type": "object",
+          "description": "Telemetry collection settings",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable telemetry collection"
+            },
+            "interval_seconds": {
+              "type": "integer",
+              "minimum": 60,
+              "maximum": 86400,
+              "default": 900,
+              "description": "Telemetry collection interval"
+            },
+            "collectors": {
+              "type": "object",
+              "description": "Enable/disable specific collectors",
+              "properties": {
+                "os": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Collect OS information"
+                },
+                "hardware": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Collect hardware information"
+                },
+                "software": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Collect software inventory"
+                },
+                "security": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Collect security information"
+                },
+                "performance": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Collect performance metrics"
+                }
+              },
+              "additionalProperties": false
+            },
+            "retention_days": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 365,
+              "default": 90,
+              "description": "Local telemetry retention period"
+            }
+          },
+          "additionalProperties": false
+        },
+        "security": {
+          "type": "object",
+          "description": "Security policy settings",
+          "properties": {
+            "antivirus": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Require antivirus protection"
+                },
+                "vendor_preference": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": ["Windows Defender", "McAfee", "Symantec", "Kaspersky", "ESET", "Other"]
+                  },
+                  "description": "Preferred antivirus vendors"
+                },
+                "scan_schedule": {
+                  "type": "string",
+                  "enum": ["daily", "weekly", "disabled"],
+                  "default": "daily",
+                  "description": "Scheduled scan frequency"
+                },
+                "real_time_protection": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Require real-time protection"
+                }
+              },
+              "additionalProperties": false
+            },
+            "firewall": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Require firewall protection"
+                },
+                "profile": {
+                  "type": "string",
+                  "enum": ["domain", "private", "public", "all"],
+                  "default": "all",
+                  "description": "Firewall profile to configure"
+                },
+                "rules": {
+                  "type": "array",
+                  "description": "Custom firewall rules",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100,
+                        "description": "Rule name"
+                      },
+                      "action": {
+                        "type": "string",
+                        "enum": ["allow", "block"],
+                        "description": "Rule action"
+                      },
+                      "direction": {
+                        "type": "string",
+                        "enum": ["inbound", "outbound"],
+                        "description": "Traffic direction"
+                      },
+                      "protocol": {
+                        "type": "string",
+                        "enum": ["tcp", "udp", "icmp", "any"],
+                        "description": "Network protocol"
+                      },
+                      "local_port": {
+                        "type": "string",
+                        "description": "Local port (can be range like 80-443)"
+                      },
+                      "remote_address": {
+                        "type": "string",
+                        "description": "Remote address or subnet"
+                      },
+                      "enabled": {
+                        "type": "boolean",
+                        "default": true,
+                        "description": "Rule enabled"
+                      }
+                    },
+                    "required": ["name", "action", "direction"],
+                    "additionalProperties": false
+                  },
+                  "maxItems": 100
+                }
+              },
+              "additionalProperties": false
+            },
+            "updates": {
+              "type": "object",
+              "properties": {
+                "automatic_updates": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Enable automatic Windows updates"
+                },
+                "update_schedule": {
+                  "type": "object",
+                  "properties": {
+                    "day": {
+                      "type": "string",
+                      "enum": ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"],
+                      "description": "Day of week for updates"
+                    },
+                    "hour": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 23,
+                      "description": "Hour of day for updates (0-23)"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "feature_updates": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Allow feature updates"
+                },
+                "quality_updates": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Allow quality updates"
+                }
+              },
+              "additionalProperties": false
+            },
+            "encryption": {
+              "type": "object",
+              "properties": {
+                "bitlocker": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Require BitLocker encryption"
+                },
+                "removable_drives": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Encrypt removable drives"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "compliance": {
+          "type": "object",
+          "description": "Compliance checking settings",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable compliance checking"
+            },
+            "check_interval_hours": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 168,
+              "default": 24,
+              "description": "Compliance check interval in hours"
+            },
+            "grace_period_days": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 90,
+              "default": 7,
+              "description": "Grace period before non-compliance alerts"
+            },
+            "auto_remediate": {
+              "type": "boolean",
+              "default": false,
+              "description": "Automatically attempt remediation"
+            }
+          },
+          "additionalProperties": false
+        },
+        "monitoring": {
+          "type": "object",
+          "description": "Agent monitoring settings",
+          "properties": {
+            "heartbeat_interval_seconds": {
+              "type": "integer",
+              "minimum": 60,
+              "maximum": 3600,
+              "default": 300,
+              "description": "Heartbeat interval"
+            },
+            "log_level": {
+              "type": "string",
+              "enum": ["error", "warn", "info", "debug"],
+              "default": "info",
+              "description": "Logging level"
+            },
+            "log_retention_days": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 365,
+              "default": 30,
+              "description": "Log retention period"
+            },
+            "performance_monitoring": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable agent performance monitoring"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Policy metadata",
+      "properties": {
+        "created_by": {
+          "type": "string",
+          "description": "User who created the policy"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Policy creation timestamp"
+        },
+        "updated_by": {
+          "type": "string",
+          "description": "User who last updated the policy"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Policy last update timestamp"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "description": "Policy tags for organization"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["name", "version", "content"],
+  "additionalProperties": false
+}

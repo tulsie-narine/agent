@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+     xmlns:netfx="http://schemas.microsoft.com/wix/NetFxExtension">
+
+  <!-- Product definition -->
+  <Product Id="*" Name="Windows Inventory Agent" Language="1033" Version="1.0.0.0"
+           Manufacturer="Your Organization" UpgradeCode="12345678-1234-5678-9012-123456789012">
+
+    <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+
+    <Media Id="1" Cabinet="product.cab" EmbedCab="yes" />
+
+    <!-- Properties -->
+    <Property Id="ARPPRODUCTICON" Value="AgentIcon.ico" />
+    <Property Id="ARPHELPLINK" Value="https://github.com/your-org/windows-inventory-agent" />
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/your-org/windows-inventory-agent" />
+
+    <!-- UI Configuration -->
+    <UIRef Id="WixUI_Minimal" />
+
+    <!-- Features -->
+    <Feature Id="ProductFeature" Title="Windows Inventory Agent" Level="1">
+      <ComponentGroupRef Id="ProductComponents" />
+      <ComponentGroupRef Id="AgentServiceComponents" />
+      <ComponentGroupRef Id="ConfigurationComponents" />
+    </Feature>
+
+    <!-- Custom Actions -->
+    <CustomAction Id="InstallAgentService"
+                  Directory="INSTALLFOLDER"
+                  ExeCommand="[INSTALLFOLDER]WindowsInventoryAgent.exe --install-service"
+                  Execute="deferred"
+                  Impersonate="no"
+                  Return="check" />
+
+    <CustomAction Id="UninstallAgentService"
+                  Directory="INSTALLFOLDER"
+                  ExeCommand="[INSTALLFOLDER]WindowsInventoryAgent.exe --uninstall-service"
+                  Execute="deferred"
+                  Impersonate="no"
+                  Return="check" />
+
+    <CustomAction Id="StartAgentService"
+                  Directory="INSTALLFOLDER"
+                  ExeCommand="net start WindowsInventoryAgent"
+                  Execute="deferred"
+                  Impersonate="no"
+                  Return="ignore" />
+
+    <CustomAction Id="StopAgentService"
+                  Directory="INSTALLFOLDER"
+                  ExeCommand="net stop WindowsInventoryAgent"
+                  Execute="deferred"
+                  Impersonate="no"
+                  Return="ignore" />
+
+    <!-- Install sequence -->
+    <InstallExecuteSequence>
+      <Custom Action="InstallAgentService" After="InstallFiles">NOT Installed</Custom>
+      <Custom Action="StartAgentService" After="InstallAgentService">NOT Installed</Custom>
+      <Custom Action="StopAgentService" Before="RemoveFiles">Installed</Custom>
+      <Custom Action="UninstallAgentService" After="StopAgentService">Installed</Custom>
+    </InstallExecuteSequence>
+
+  </Product>
+
+  <!-- Fragment for directories -->
+  <Fragment>
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="ManufacturerFolder" Name="Your Organization">
+          <Directory Id="INSTALLFOLDER" Name="Windows Inventory Agent" />
+        </Directory>
+      </Directory>
+      <Directory Id="ProgramMenuFolder">
+      </Directory>
+    </Directory>
+  </Fragment>
+
+  <!-- Fragment for components -->
+  <Fragment>
+    <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
+      <!-- Main executable -->
+      <Component Id="AgentExecutable" Guid="11111111-1111-1111-1111-111111111111">
+        <File Id="AgentExe" Name="WindowsInventoryAgent.exe" Source="$(var.OutputPath)\WindowsInventoryAgent.exe" KeyPath="yes" />
+      </Component>
+
+      <!-- License file -->
+      <Component Id="LicenseFile" Guid="22222222-2222-2222-2222-222222222222">
+        <File Id="License" Name="LICENSE" Source="$(var.ProjectRoot)\LICENSE" />
+      </Component>
+
+      <!-- README file -->
+      <Component Id="ReadmeFile" Guid="33333333-3333-3333-3333-333333333333">
+        <File Id="Readme" Name="README.md" Source="$(var.ProjectRoot)\README.md" />
+      </Component>
+    </ComponentGroup>
+
+    <!-- Service components -->
+    <ComponentGroup Id="AgentServiceComponents" Directory="INSTALLFOLDER">
+      <Component Id="AgentService" Guid="44444444-4444-4444-4444-444444444444" KeyPath="yes">
+        <ServiceInstall Id="AgentServiceInstall"
+                        Name="WindowsInventoryAgent"
+                        DisplayName="Windows Inventory Agent Service"
+                        Description="Collects and reports Windows system inventory data"
+                        Start="auto"
+                        Type="ownProcess"
+                        ErrorControl="normal"
+                        Account="LocalSystem">
+        </ServiceInstall>
+        <ServiceControl Id="AgentServiceControl"
+                        Name="WindowsInventoryAgent"
+                        Start="install"
+                        Stop="uninstall"
+                        Remove="uninstall" />
+      </Component>
+    </ComponentGroup>
+
+    <!-- Configuration components -->
+    <ComponentGroup Id="ConfigurationComponents" Directory="INSTALLFOLDER">
+      <!-- Log directory -->
+      <Component Id="LogDirectory" Guid="55555555-5555-5555-5555-555555555555">
+        <CreateFolder />
+        <RemoveFolder Id="RemoveLogDir" On="uninstall" />
+      </Component>
+
+      <!-- Data directory -->
+      <Component Id="DataDirectory" Guid="66666666-6666-6666-6666-666666666666">
+        <CreateFolder />
+        <RemoveFolder Id="RemoveDataDir" On="uninstall" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+
+</Wix>

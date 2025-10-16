@@ -1,0 +1,112 @@
+# Security Configuration for Windows Inventory Agent API
+
+# JWT Authentication
+jwt:
+  issuer: "windows-inventory-agent"
+  audience: "api"
+  access_token_expiry: "1h"
+  refresh_token_expiry: "24h"
+  secret_rotation_days: 30
+  algorithm: "RS256"
+
+# TLS Configuration
+tls:
+  enabled: true
+  min_version: "1.3"
+  max_version: "1.3"
+  cipher_suites:
+    - TLS_AES_256_GCM_SHA384
+    - TLS_CHACHA20_POLY1305_SHA256
+    - TLS_AES_128_GCM_SHA256
+  certificate_file: "/etc/ssl/certs/api.crt"
+  private_key_file: "/etc/ssl/private/api.key"
+  ca_certificate_file: "/etc/ssl/certs/ca.crt"
+
+# Rate Limiting
+rate_limiting:
+  enabled: true
+  requests_per_minute: 100
+  burst_limit: 200
+  cleanup_interval: "1m"
+
+# CORS Configuration
+cors:
+  enabled: true
+  allowed_origins:
+    - "https://inventory.company.com"
+    - "https://admin.inventory.company.com"
+  allowed_methods:
+    - "GET"
+    - "POST"
+    - "PUT"
+    - "DELETE"
+    - "OPTIONS"
+  allowed_headers:
+    - "Content-Type"
+    - "Authorization"
+    - "X-Requested-With"
+  allow_credentials: true
+  max_age: "24h"
+
+# Security Headers
+security_headers:
+  enabled: true
+  content_security_policy: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+  x_frame_options: "DENY"
+  x_content_type_options: "nosniff"
+  x_xss_protection: "1; mode=block"
+  strict_transport_security: "max-age=31536000; includeSubDomains"
+  referrer_policy: "strict-origin-when-cross-origin"
+
+# Input Validation
+input_validation:
+  enabled: true
+  max_request_size: "10MB"
+  max_json_depth: 10
+  sanitize_input: true
+
+# Audit Logging
+audit:
+  enabled: true
+  log_level: "info"
+  log_file: "/var/log/inventory-agent/audit.log"
+  max_file_size: "100MB"
+  max_backups: 10
+  compress: true
+  events:
+    - authentication
+    - authorization
+    - data_access
+    - policy_changes
+    - command_execution
+
+# Database Security
+database:
+  encryption:
+    enabled: true
+    algorithm: "AES-256"
+  connection:
+    max_open_connections: 25
+    max_idle_connections: 5
+    connection_max_lifetime: "1h"
+  query_timeout: "30s"
+
+# API Security
+api_security:
+  hide_errors: true
+  request_id_header: "X-Request-ID"
+  sensitive_headers:
+    - "Authorization"
+    - "X-API-Key"
+  allowed_content_types:
+    - "application/json"
+    - "application/xml"
+
+# Monitoring
+monitoring:
+  security_events: true
+  metrics_enabled: true
+  alert_thresholds:
+    failed_auth_attempts: 5
+    suspicious_requests: 10
+    rate_limit_exceeded: 20

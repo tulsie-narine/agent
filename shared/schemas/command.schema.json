@@ -1,0 +1,446 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://inventory-agent.com/schemas/command/v1.0.0",
+  "title": "Command Schema",
+  "description": "Schema for validating commands sent to Windows inventory agents",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique command identifier"
+    },
+    "device_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Target device identifier"
+    },
+    "command_type": {
+      "type": "string",
+      "enum": [
+        "run_script",
+        "install_software",
+        "uninstall_software",
+        "update_policy",
+        "restart_service",
+        "shutdown_device",
+        "run_command",
+        "collect_inventory",
+        "update_agent",
+        "custom_command"
+      ],
+      "description": "Type of command to execute"
+    },
+    "command_data": {
+      "type": "object",
+      "description": "Command-specific data payload",
+      "discriminator": {
+        "propertyName": "command_type"
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "command_type": { "const": "run_script" },
+            "script": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10000,
+              "description": "PowerShell or batch script to execute"
+            },
+            "script_type": {
+              "type": "string",
+              "enum": ["powershell", "batch", "exe"],
+              "default": "powershell",
+              "description": "Script execution type"
+            },
+            "parameters": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 500
+              },
+              "description": "Script parameters",
+              "maxItems": 20
+            },
+            "working_directory": {
+              "type": "string",
+              "maxLength": 500,
+              "description": "Working directory for script execution"
+            },
+            "run_as_admin": {
+              "type": "boolean",
+              "default": false,
+              "description": "Execute script with administrator privileges"
+            },
+            "timeout_seconds": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3600,
+              "default": 300,
+              "description": "Script execution timeout"
+            }
+          },
+          "required": ["script"]
+        },
+        {
+          "properties": {
+            "command_type": { "const": "install_software" },
+            "software_name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "description": "Name of software to install"
+            },
+            "installer_url": {
+              "type": "string",
+              "format": "uri",
+              "description": "URL to download installer"
+            },
+            "installer_path": {
+              "type": "string",
+              "maxLength": 500,
+              "description": "Local path to installer file"
+            },
+            "installer_type": {
+              "type": "string",
+              "enum": ["msi", "exe", "msix", "appx"],
+              "description": "Installer file type"
+            },
+            "install_arguments": {
+              "type": "string",
+              "maxLength": 1000,
+              "description": "Installation command arguments"
+            },
+            "uninstall_key": {
+              "type": "string",
+              "maxLength": 200,
+              "description": "Registry uninstall key for tracking"
+            },
+            "expected_exit_codes": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 255
+              },
+              "default": [0],
+              "description": "Expected exit codes indicating success"
+            },
+            "timeout_seconds": {
+              "type": "integer",
+              "minimum": 60,
+              "maximum": 3600,
+              "default": 1800,
+              "description": "Installation timeout"
+            }
+          },
+          "required": ["software_name"],
+          "oneOf": [
+            { "required": ["installer_url"] },
+            { "required": ["installer_path"] }
+          ]
+        },
+        {
+          "properties": {
+            "command_type": { "const": "uninstall_software" },
+            "software_name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "description": "Name of software to uninstall"
+            },
+            "uninstall_key": {
+              "type": "string",
+              "maxLength": 200,
+              "description": "Registry uninstall key"
+            },
+            "uninstall_command": {
+              "type": "string",
+              "maxLength": 1000,
+              "description": "Custom uninstall command"
+            },
+            "force_uninstall": {
+              "type": "boolean",
+              "default": false,
+              "description": "Force uninstall even if in use"
+            },
+            "timeout_seconds": {
+              "type": "integer",
+              "minimum": 30,
+              "maximum": 1800,
+              "default": 600,
+              "description": "Uninstallation timeout"
+            }
+          },
+          "required": ["software_name"]
+        },
+        {
+          "properties": {
+            "command_type": { "const": "update_policy" },
+            "policy_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Policy identifier to update"
+            },
+            "policy_content": {
+              "type": "object",
+              "description": "Updated policy content",
+              "additionalProperties": true
+            },
+            "force_update": {
+              "type": "boolean",
+              "default": false,
+              "description": "Force policy update even if conflicts"
+            }
+          },
+          "required": ["policy_id", "policy_content"]
+        },
+        {
+          "properties": {
+            "command_type": { "const": "restart_service" },
+            "service_name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100,
+              "description": "Windows service name to restart"
+            },
+            "timeout_seconds": {
+              "type": "integer",
+              "minimum": 10,
+              "maximum": 300,
+              "default": 60,
+              "description": "Service restart timeout"
+            }
+          },
+          "required": ["service_name"]
+        },
+        {
+          "properties": {
+            "command_type": { "const": "shutdown_device" },
+            "shutdown_type": {
+              "type": "string",
+              "enum": ["shutdown", "restart", "hibernate", "sleep"],
+              "default": "shutdown",
+              "description": "Type of shutdown operation"
+            },
+            "delay_seconds": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 3600,
+              "default": 60,
+              "description": "Delay before shutdown"
+            },
+            "force": {
+              "type": "boolean",
+              "default": false,
+              "description": "Force shutdown without user interaction"
+            },
+            "message": {
+              "type": "string",
+              "maxLength": 500,
+              "description": "Shutdown message to display to user"
+            }
+          }
+        },
+        {
+          "properties": {
+            "command_type": { "const": "run_command" },
+            "command": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000,
+              "description": "Command to execute"
+            },
+            "arguments": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 500
+              },
+              "description": "Command arguments",
+              "maxItems": 50
+            },
+            "working_directory": {
+              "type": "string",
+              "maxLength": 500,
+              "description": "Working directory"
+            },
+            "run_as_admin": {
+              "type": "boolean",
+              "default": false,
+              "description": "Run with administrator privileges"
+            },
+            "timeout_seconds": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3600,
+              "default": 300,
+              "description": "Command execution timeout"
+            }
+          },
+          "required": ["command"]
+        },
+        {
+          "properties": {
+            "command_type": { "const": "collect_inventory" },
+            "inventory_types": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["os", "hardware", "software", "security", "all"]
+              },
+              "default": ["all"],
+              "description": "Types of inventory to collect"
+            },
+            "force_full_scan": {
+              "type": "boolean",
+              "default": false,
+              "description": "Force complete inventory scan"
+            },
+            "timeout_seconds": {
+              "type": "integer",
+              "minimum": 60,
+              "maximum": 3600,
+              "default": 1800,
+              "description": "Inventory collection timeout"
+            }
+          }
+        },
+        {
+          "properties": {
+            "command_type": { "const": "update_agent" },
+            "update_url": {
+              "type": "string",
+              "format": "uri",
+              "description": "URL to download agent update"
+            },
+            "update_version": {
+              "type": "string",
+              "pattern": "^\\d+\\.\\d+\\.\\d+$",
+              "description": "Target version for update"
+            },
+            "force_update": {
+              "type": "boolean",
+              "default": false,
+              "description": "Force update even if same version"
+            },
+            "rollback_on_failure": {
+              "type": "boolean",
+              "default": true,
+              "description": "Rollback update if it fails"
+            },
+            "timeout_seconds": {
+              "type": "integer",
+              "minimum": 300,
+              "maximum": 3600,
+              "default": 1800,
+              "description": "Update timeout"
+            }
+          },
+          "required": ["update_url", "update_version"]
+        },
+        {
+          "properties": {
+            "command_type": { "const": "custom_command" },
+            "custom_type": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100,
+              "description": "Custom command type identifier"
+            },
+            "parameters": {
+              "type": "object",
+              "description": "Custom command parameters",
+              "additionalProperties": true
+            },
+            "timeout_seconds": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3600,
+              "default": 300,
+              "description": "Command execution timeout"
+            }
+          },
+          "required": ["custom_type"]
+        }
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "running", "completed", "failed", "expired", "cancelled"],
+      "default": "pending",
+      "description": "Command execution status"
+    },
+    "priority": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10,
+      "default": 5,
+      "description": "Command execution priority"
+    },
+    "timeout_seconds": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 86400,
+      "description": "Command execution timeout override"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Command expiration timestamp"
+    },
+    "created_by": {
+      "type": "string",
+      "description": "User who created the command"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Command creation timestamp"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional command metadata",
+      "properties": {
+        "correlation_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Correlation ID for tracking"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "description": "Command tags"
+        },
+        "notification_settings": {
+          "type": "object",
+          "properties": {
+            "notify_on_start": {
+              "type": "boolean",
+              "default": false,
+              "description": "Send notification when command starts"
+            },
+            "notify_on_completion": {
+              "type": "boolean",
+              "default": true,
+              "description": "Send notification when command completes"
+            },
+            "notify_on_failure": {
+              "type": "boolean",
+              "default": true,
+              "description": "Send notification when command fails"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["command_type", "command_data"],
+  "additionalProperties": false
+}

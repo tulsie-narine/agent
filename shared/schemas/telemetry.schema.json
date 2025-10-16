@@ -1,0 +1,308 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://inventory-agent.com/schemas/telemetry/v1.0.0",
+  "title": "Telemetry Data Schema",
+  "description": "Schema for validating telemetry data sent by Windows inventory agents",
+  "type": "object",
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when the telemetry was collected"
+    },
+    "data": {
+      "type": "object",
+      "description": "Telemetry data payload",
+      "properties": {
+        "os": {
+          "type": "object",
+          "description": "Operating system information",
+          "properties": {
+            "version": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100,
+              "description": "OS version string"
+            },
+            "build": {
+              "type": "string",
+              "pattern": "^\\d+\\.\\d+$",
+              "description": "OS build number"
+            },
+            "architecture": {
+              "type": "string",
+              "enum": ["x86", "x64", "arm", "arm64"],
+              "description": "System architecture"
+            },
+            "install_date": {
+              "type": "string",
+              "format": "date-time",
+              "description": "OS installation date"
+            }
+          },
+          "required": ["version", "architecture"]
+        },
+        "hardware": {
+          "type": "object",
+          "description": "Hardware information",
+          "properties": {
+            "cpu": {
+              "type": "object",
+              "description": "CPU information",
+              "properties": {
+                "model": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200,
+                  "description": "CPU model name"
+                },
+                "cores": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 1024,
+                  "description": "Number of CPU cores"
+                },
+                "threads": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 2048,
+                  "description": "Number of CPU threads"
+                },
+                "speed_mhz": {
+                  "type": "number",
+                  "minimum": 100,
+                  "maximum": 10000,
+                  "description": "CPU speed in MHz"
+                },
+                "usage_percent": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "description": "Current CPU usage percentage"
+                }
+              },
+              "required": ["cores", "threads"]
+            },
+            "memory": {
+              "type": "object",
+              "description": "Memory information",
+              "properties": {
+                "total_gb": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 1024,
+                  "description": "Total memory in GB"
+                },
+                "available_gb": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Available memory in GB"
+                },
+                "usage_percent": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "description": "Memory usage percentage"
+                }
+              },
+              "required": ["total_gb"]
+            },
+            "disks": {
+              "type": "array",
+              "description": "Disk drive information",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "device": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z]:$",
+                    "description": "Drive letter (Windows format)"
+                  },
+                  "total_gb": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Total disk space in GB"
+                  },
+                  "free_gb": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Free disk space in GB"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": ["HDD", "SSD", "NVMe", "Unknown"],
+                    "description": "Disk type"
+                  },
+                  "usage_percent": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100,
+                    "description": "Disk usage percentage"
+                  }
+                },
+                "required": ["device", "total_gb", "free_gb"]
+              },
+              "maxItems": 26
+            },
+            "network": {
+              "type": "object",
+              "description": "Network interface information",
+              "properties": {
+                "interfaces": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100,
+                        "description": "Interface name"
+                      },
+                      "mac_address": {
+                        "type": "string",
+                        "pattern": "^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$",
+                        "description": "MAC address"
+                      },
+                      "ip_addresses": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "format": "ipv4"
+                        },
+                        "description": "IP addresses assigned to interface"
+                      },
+                      "status": {
+                        "type": "string",
+                        "enum": ["up", "down", "unknown"],
+                        "description": "Interface status"
+                      }
+                    },
+                    "required": ["name"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "software": {
+          "type": "array",
+          "description": "Installed software information",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "description": "Software name"
+              },
+              "version": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 50,
+                "description": "Software version"
+              },
+              "publisher": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "description": "Software publisher"
+              },
+              "install_date": {
+                "type": "string",
+                "format": "date",
+                "description": "Installation date"
+              },
+              "install_location": {
+                "type": "string",
+                "maxLength": 500,
+                "description": "Installation directory"
+              },
+              "size_mb": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Software size in MB"
+              }
+            },
+            "required": ["name"]
+          },
+          "maxItems": 10000
+        },
+        "security": {
+          "type": "object",
+          "description": "Security-related information",
+          "properties": {
+            "antivirus": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "description": "Antivirus protection enabled"
+                },
+                "vendor": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100,
+                  "description": "Antivirus vendor name"
+                },
+                "version": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 50,
+                  "description": "Antivirus version"
+                },
+                "last_scan": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "Last scan timestamp"
+                },
+                "threat_count": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Number of detected threats"
+                }
+              }
+            },
+            "firewall": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "description": "Firewall enabled"
+                },
+                "profile": {
+                  "type": "string",
+                  "enum": ["Domain", "Private", "Public"],
+                  "description": "Firewall profile"
+                }
+              }
+            },
+            "updates": {
+              "type": "object",
+              "properties": {
+                "last_update": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "Last Windows update timestamp"
+                },
+                "pending_updates": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Number of pending updates"
+                },
+                "auto_update": {
+                  "type": "boolean",
+                  "description": "Automatic updates enabled"
+                }
+              }
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["timestamp", "data"],
+  "additionalProperties": false
+}

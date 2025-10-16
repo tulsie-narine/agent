@@ -1,0 +1,182 @@
+# Windows Inventory Agent Monitoring Configuration
+
+# Prometheus Metrics Configuration
+prometheus:
+  enabled: true
+  path: "/metrics"
+  namespace: "inventory_agent"
+
+# Application Metrics
+metrics:
+  # HTTP Server Metrics
+  http_server:
+    enabled: true
+    request_duration:
+      buckets: [0.1, 0.5, 1.0, 2.5, 5.0, 10.0]
+    request_size:
+      buckets: [100, 1000, 10000, 100000, 1000000]
+    response_size:
+      buckets: [100, 1000, 10000, 100000, 1000000]
+
+  # Database Metrics
+  database:
+    enabled: true
+    connection_pool:
+      enabled: true
+    query_duration:
+      enabled: true
+      buckets: [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0, 5.0]
+
+  # Business Metrics
+  business:
+    enabled: true
+    telemetry_submissions:
+      enabled: true
+    policy_evaluations:
+      enabled: true
+    command_executions:
+      enabled: true
+    active_devices:
+      enabled: true
+
+# Health Checks
+health_checks:
+  enabled: true
+  path: "/health"
+  checks:
+    - name: "database"
+      type: "ping"
+      timeout: "5s"
+      interval: "30s"
+    - name: "redis"
+      type: "ping"
+      timeout: "5s"
+      interval: "30s"
+    - name: "external_api"
+      type: "http"
+      url: "https://api.github.com"
+      timeout: "10s"
+      interval: "60s"
+
+# Logging Configuration
+logging:
+  level: "info"
+  format: "json"
+  outputs:
+    - type: "stdout"
+    - type: "file"
+      path: "/var/log/inventory-agent/app.log"
+      max_size: "100MB"
+      max_backups: 10
+      compress: true
+  structured_fields:
+    - timestamp
+    - level
+    - service
+    - component
+    - request_id
+    - user_id
+    - operation
+    - duration
+    - error
+
+# Alerting Rules
+alerting:
+  enabled: true
+  rules:
+    # High Error Rate
+    - name: "HighErrorRate"
+      condition: "rate(http_requests_total{status=~\"5..\"}[5m]) / rate(http_requests_total[5m]) > 0.05"
+      severity: "critical"
+      description: "Error rate is {{ $value }}%, above 5% threshold"
+      for: "5m"
+
+    # High Latency
+    - name: "HighLatency"
+      condition: "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2.0"
+      severity: "warning"
+      description: "95th percentile latency is {{ $value }}s, above 2s threshold"
+      for: "5m"
+
+    # Database Connection Issues
+    - name: "DatabaseConnectionIssues"
+      condition: "database_connections_active > 20"
+      severity: "warning"
+      description: "Database has {{ $value }} active connections, above normal threshold"
+      for: "2m"
+
+    # Low Disk Space
+    - name: "LowDiskSpace"
+      condition: "(1 - node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 > 85"
+      severity: "warning"
+      description: "Disk usage is {{ $value }}%, above 85% threshold"
+      for: "5m"
+
+    # Memory Usage High
+    - name: "HighMemoryUsage"
+      condition: "(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100 > 90"
+      severity: "critical"
+      description: "Memory usage is {{ $value }}%, above 90% threshold"
+      for: "2m"
+
+# Dashboard Configuration
+dashboard:
+  enabled: true
+  title: "Windows Inventory Agent"
+  refresh_interval: "30s"
+  panels:
+    # System Overview
+    - title: "System Overview"
+      type: "row"
+      panels:
+        - title: "Active Devices"
+          type: "stat"
+          query: "inventory_agent_devices_active"
+        - title: "Telemetry Submissions/min"
+          type: "stat"
+          query: "rate(inventory_agent_telemetry_submissions_total[5m])"
+        - title: "Command Executions/min"
+          type: "stat"
+          query: "rate(inventory_agent_command_executions_total[5m])"
+
+    # Performance Metrics
+    - title: "Performance Metrics"
+      type: "row"
+      panels:
+        - title: "HTTP Request Duration"
+          type: "graph"
+          query: "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))"
+        - title: "Database Query Duration"
+          type: "graph"
+          query: "histogram_quantile(0.95, rate(database_query_duration_seconds_bucket[5m]))"
+        - title: "Error Rate"
+          type: "graph"
+          query: "rate(http_requests_total{status=~\"5..\"}[5m]) / rate(http_requests_total[5m]) * 100"
+
+    # Resource Usage
+    - title: "Resource Usage"
+      type: "row"
+      panels:
+        - title: "CPU Usage"
+          type: "graph"
+          query: "rate(process_cpu_user_seconds_total[5m]) * 100"
+        - title: "Memory Usage"
+          type: "graph"
+          query: "(1 - process_resident_memory_bytes / process_virtual_memory_bytes) * 100"
+        - title: "Disk I/O"
+          type: "graph"
+          query: "rate(process_io_read_bytes_total[5m]) + rate(process_io_write_bytes_total[5m])"
+
+# Tracing Configuration
+tracing:
+  enabled: false  # Enable for detailed performance analysis
+  service_name: "inventory-agent"
+  jaeger_endpoint: "http://jaeger:14268/api/traces"
+  sampling_rate: 0.1
+
+# Profiling Configuration
+profiling:
+  enabled: false  # Enable for performance debugging
+  path: "/debug/pprof"
+  block_profile_rate: 1
+  mutex_profile_fraction: 1
