@@ -2,10 +2,6 @@
 # The agent is Windows-only and should not be built on Railway
 agent/
 
-# Exclude Go workspace files that confuse Railway's auto-detection
-go.work
-go.work.sum
-
 # Exclude other development and build files
 tools/
 docs/
