@@ -1,0 +1,29 @@
+[services.postgres]
+# Managed PostgreSQL database
+# Railway automatically provides DATABASE_URL
+
+[services.nats]
+# NATS with JetStream for message queuing
+source = { image = "nats:2.10" }
+cmd = ["-js", "--http_port", "8222"]
+healthcheck = { path = "/", port = 8222, interval = 10, timeout = 5, retries = 5 }
+restart = "always"
+
+[services.api]
+# Go API service
+source = { path = "./api" }
+build = { context = "./api" }
+healthcheck = { path = "/health", interval = 30, timeout = 10, retries = 3 }
+restart = "always"
+depends_on = ["postgres", "nats"]
+
+[services.api.environment]
+DATABASE_URL = "${{Postgres.DATABASE_URL}}"
+NATS_URL = "nats://nats:4222"
+API_PORT = "8080"
+JWT_SECRET = "${{JWT_SECRET}}"
+LOG_LEVEL = "info"
+RATE_LIMIT_RPS = "100"
+MAX_BATCH_SIZE = "1000"
+TLS_CERT_FILE = ""
+TLS_KEY_FILE = ""

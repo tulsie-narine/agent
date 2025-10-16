@@ -81,7 +81,50 @@ src/
 | `NEXTAUTH_URL` | NextAuth.js URL | `http://localhost:3000` |
 | `NEXTAUTH_SECRET` | NextAuth.js secret | Required |
 
-## Contributing
+## Deploying to Vercel
+
+### Prerequisites
+- Vercel account
+- Railway-deployed API URL
+- Vercel CLI (optional, for CLI deployment)
+
+### Deployment Methods
+
+#### Via Vercel Dashboard (Recommended)
+1. Connect your GitHub repository to Vercel
+2. Set the root directory to `web`
+3. Vercel will auto-detect the Next.js framework
+4. Configure environment variables in Project Settings → Environment Variables
+5. Deploy
+
+#### Via Vercel CLI
+```bash
+npm i -g vercel
+cd web
+vercel
+```
+Follow the prompts and configure environment variables when asked.
+
+### Required Environment Variables
+Set these in the Vercel dashboard or CLI:
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `NEXT_PUBLIC_API_URL` | Railway API URL | `https://your-api-name.railway.app` |
+| `NEXTAUTH_URL` | Vercel deployment URL | `https://your-app-name.vercel.app` |
+| `NEXTAUTH_SECRET` | Random secret string | `openssl rand -base64 32` |
+
+### Post-Deployment
+- Verify deployment by checking the dashboard and API connectivity
+- View build logs in the Vercel dashboard
+- Configure custom domains if needed
+
+### Troubleshooting
+- **API connection issues**: Verify `NEXT_PUBLIC_API_URL` points to the correct Railway URL
+- **Authentication problems**: Ensure `NEXTAUTH_URL` matches your Vercel domain
+- **Build failures**: Check Vercel build logs for TypeScript or dependency errors
+
+The `vercel.json` configuration optimizes the deployment for Next.js 14 with security headers and proper routing.
 
 1. Follow the existing code style and patterns
 2. Add TypeScript types for new data structures
