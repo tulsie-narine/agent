@@ -1,7 +1,3 @@
-[build]
-builder = "dockerfile"
-dockerfilePath = "./api/Dockerfile"
-
 [[services]]
 name = "postgres"
 source = { type = "database" }
@@ -16,6 +12,7 @@ healthcheckTimeout = 300
 [[services]]
 name = "api"
 source = { path = "./api" }
+build = { builder = "dockerfile", dockerfilePath = "Dockerfile" }
 healthcheckPath = "/health"
 healthcheckTimeout = 300
 
