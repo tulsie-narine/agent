@@ -13,7 +13,7 @@ API_BINARY := $(BUILD_DIR)/api.exe
 # Go build flags
 GO_BUILD_FLAGS := -ldflags "$(LDFLAGS)" -tags netgo
 
-.PHONY: help build-agent build-api build-web test-agent test-api test-web lint docker-up docker-down db-migrate-up db-migrate-down msi-package clean
+.PHONY: help build-agent build-api build-web test-agent test-api test-web lint docker-up docker-down db-migrate-up db-migrate-down msi-package docker-build docker-up-build docker-logs docker-restart docker-clean docker-status clean
 
 help: ## Show this help message
 	@echo "Inventory Agent Build System"
@@ -63,12 +63,41 @@ lint: ## Run linters
 docker-up: ## Start Docker Compose services
 	@echo "Starting Docker services..."
 	docker-compose up -d
-	@echo "Services started. API: http://localhost:8080, PgAdmin: http://localhost:5050"
+	@echo "Services started: API at http://localhost:8080, Web at http://localhost:3000"
 
-docker-down: ## Stop Docker Compose services
+docker-build: ## Build all Docker images locally
+	@echo "Building Docker images..."
+	docker-compose build
+	@echo "Docker images built"
+
+docker-up-build: ## Start Docker services with fresh image builds
+	@echo "Building and starting Docker services..."
+	docker-compose up -d --build
+	@echo "Services started with fresh builds"
+
+docker-logs: ## Tail logs from all Docker services
+	@echo "Tailing Docker logs (Ctrl+C to exit)..."
+	docker-compose logs -f
+
+docker-restart: ## Restart all Docker services
+	@echo "Restarting Docker services..."
+	docker-compose restart
+	@echo "Services restarted"
+
+docker-status: ## Show status of Docker services
+	@echo "Docker service status:"
+	@docker-compose ps --format "table {{.Service}}\t{{.Status}}\t{{.Ports}}"
+
+docker-clean: ## Stop services and remove containers, volumes, and images
+	@echo "Cleaning Docker environment (this will delete data!)..."
+	docker-compose down -v
+	docker system prune -f
+	@echo "Docker environment cleaned"
+
+docker-down: ## Stop Docker Compose services (keeps data)
 	@echo "Stopping Docker services..."
 	docker-compose down
-	@echo "Services stopped"
+	@echo "Services stopped. Data preserved in volumes"
 
 db-migrate-up: ## Run database migrations up
 	@echo "Running database migrations..."

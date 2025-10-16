@@ -45,19 +45,54 @@ The system follows a pull-based architecture with store-and-forward capabilities
 
 ## Quick Start
 
+### Local Docker Desktop Deployment (Recommended for Development)
+
+The fastest way to get the entire system running locally:
+
+1. **Ensure Docker Desktop is running**
+   - Download and install from https://www.docker.com/products/docker-desktop
+   - Allocate at least 8GB RAM in Docker settings
+
+2. **Clone and configure**
+   ```bash
+   git clone https://github.com/tulsie-narine/agent.git
+   cd agent
+   cp .env.example .env
+   # Edit .env and set a secure JWT_SECRET (or generate one)
+   ```
+
+3. **Start all services**
+   ```bash
+   docker-compose up -d
+   ```
+
+4. **Access the system**
+   - Web Console: http://localhost:3000
+   - API: http://localhost:8080
+   - PostgreSQL: localhost:5432
+
+For detailed Docker Desktop deployment instructions, see **[DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md)**.
+
 ### Prerequisites
 
 - Go 1.22+
 - Node.js 20+
 - PostgreSQL 16+
-- Docker & Docker Compose
+- Docker & Docker Compose (for local development)
 
-### Development Setup
+### Alternative Development Setup
+
+If you prefer manual setup without Docker:
 
 1. Clone the repository
 2. Copy `.env.example` to `.env` and configure
-3. Start services: `make docker-up`
+3. Start services manually:
+   - PostgreSQL: `docker run postgres:16`
+   - NATS: `docker run nats:2.10`
+   - API: `cd api && go run main.go`
+   - Web: `cd web && npm install && npm run dev`
 4. Run database migrations: `make db-migrate-up`
+
 5. Build and run API: `make build-api && make run-api`
 6. Build and run web: `cd web && npm install && npm run dev`
 7. Build agent: `make build-agent`
@@ -202,8 +237,16 @@ The `railway.toml` defines three services:
 
 - Railway free tier includes $5 credit per month
 - PostgreSQL and API services consume resources
-- Monitor usage in Railway dashboard
-- Consider upgrading to paid plan for production workloads
+## Documentation
+
+- **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)**: Complete guide for Railway/Vercel cloud deployment
+- **[DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md)**: Local Docker Desktop deployment for development
+- **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**: Alternative deployment methods (Docker, Kubernetes)
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**: System architecture and design decisions
+- **[docs/API.md](docs/API.md)**: API reference and endpoints
+- **[docs/DATABASE.md](docs/DATABASE.md)**: Database schema and migrations
+- **[docs/SECURITY.md](docs/SECURITY.md)**: Security best practices
+- **[docs/TESTING.md](docs/TESTING.md)**: Testing guide
 
 ## Data Flow
 
@@ -226,6 +269,7 @@ The `railway.toml` defines three services:
 - Agent: <1% CPU, <60 MB RAM
 - API: <300ms p95 ingest latency for 10k agents
 - Web: <500ms p95 page load time
+
 
 ## Phases
 
