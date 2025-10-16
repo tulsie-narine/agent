@@ -20,6 +20,7 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/nats-io/nats.go"
 	"github.com/yourorg/inventory-agent/api/internal/auth"
 	"github.com/yourorg/inventory-agent/api/internal/config"
@@ -35,14 +36,14 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	// Debug: Log all PG* and DATABASE* environment variables
-	log.Println("=== Environment Variables ===")
+	// Debug: Log all environment variables
+	log.Println("=== All Environment Variables ===")
 	for _, env := range os.Environ() {
-		if strings.HasPrefix(env, "PG") || strings.HasPrefix(env, "DATABASE") || strings.Contains(env, "PORT") {
+		if strings.Contains(strings.ToUpper(env), "DATABASE") || strings.Contains(strings.ToUpper(env), "PG") || strings.Contains(strings.ToUpper(env), "HOST") {
 			log.Printf("ENV: %s", env)
 		}
 	}
-	log.Println("=== End Environment Variables ===")
+	log.Println("=== End All Environment Variables ===")
 
 	// Log database URL (mask password for security)
 	dbURL := cfg.DatabaseURL
@@ -63,9 +64,25 @@ func main() {
 		log.Printf("Using DATABASE_URL: %s", dbURL)
 	}
 
-	// Initialize database
-	db, err := database.Connect(cfg.DatabaseURL)
-	if err != nil {
+	// Initialize database with retries
+	var db *pgxpool.Pool
+	var dbErr error
+	maxRetries := 30
+	retryDelay := 2 * time.Second
+	
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		db, dbErr = database.Connect(cfg.DatabaseURL)
+		if dbErr == nil {
+			log.Printf("Database connected successfully (attempt %d)", attempt)
+			break
+		}
+		log.Printf("Failed to connect to database (attempt %d/%d): %v. Retrying in %v...", attempt, maxRetries, dbErr, retryDelay)
+		if attempt < maxRetries {
+			time.Sleep(retryDelay)
+		}
+	}
+	
+	if dbErr != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 	defer db.Close()
