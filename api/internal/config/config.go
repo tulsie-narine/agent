@@ -1,10 +1,8 @@
 package config
 
 import (
-	"fmt"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -22,24 +20,6 @@ type APIConfig struct {
 
 func Load() (*APIConfig, error) {
 	dbURL := getEnv("DATABASE_URL", "postgres://inventory:inventory123@localhost:5432/inventory?sslmode=disable")
-	
-	// In Railway, if DATABASE_URL is not set or contains localhost, try Railway's internal service variables
-	if dbURL == "postgres://inventory:inventory123@localhost:5432/inventory?sslmode=disable" || strings.Contains(dbURL, "localhost") {
-		// Try to construct from Railway's PostgreSQL service environment variables
-		if pgHost := getEnv("PGHOST", ""); pgHost != "" {
-			pgUser := getEnv("PGUSER", "postgres")
-			pgPassword := getEnv("PGPASSWORD", "")
-			pgDatabase := getEnv("PGDATABASE", "postgres")
-			pgPort := getEnv("PGPORT", "5432")
-			
-			if pgPassword != "" {
-				dbURL = fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", pgUser, pgPassword, pgHost, pgPort, pgDatabase)
-			}
-		} else {
-			// Fallback: replace localhost with common Railway service hostnames
-			dbURL = strings.Replace(dbURL, "localhost", "postgres.railway.internal", 1)
-		}
-	}
 	
 	cfg := &APIConfig{
 		DatabaseURL:   dbURL,
