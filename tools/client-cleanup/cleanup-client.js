@@ -7,13 +7,13 @@ const { stdin: input, stdout: output } = require('process');
 
 const DEFAULT_CONFIG = {
   resources: [
-    { name: 'initiatives', listPath: '/v1/initiatives', deletePath: '/v1/initiatives/{id}', queryParam: 'clientId', idField: 'id' },
-    { name: 'meetings', listPath: '/v1/meetings', deletePath: '/v1/meetings/{id}', queryParam: 'clientId', idField: 'id' },
-    { name: 'action items', listPath: '/v1/action-items', deletePath: '/v1/action-items/{id}', queryParam: 'clientId', idField: 'id' },
-    { name: 'notes', listPath: '/v1/notes', deletePath: '/v1/notes/{id}', queryParam: 'clientId', idField: 'id' },
-    { name: 'assessments', listPath: '/v1/assessments', deletePath: '/v1/assessments/{id}', queryParam: 'clientId', idField: 'id' },
-    { name: 'goals', listPath: '/v1/goals', deletePath: '/v1/goals/{id}', queryParam: 'clientId', idField: 'id' },
-    { name: 'contracts', listPath: '/v1/contracts', deletePath: '/v1/contracts/{id}', queryParam: 'clientId', idField: 'id' }
+    { name: 'initiatives', listPath: '/lifecycle-manager/v1/initiatives', deletePath: '/lifecycle-manager/v1/initiatives/{id}', queryParam: 'filter[client.id]', idField: 'id' },
+    { name: 'meetings', listPath: '/lifecycle-manager/v1/meetings', deletePath: '/lifecycle-manager/v1/meetings/{id}', queryParam: 'filter[client.id]', idField: 'id' },
+    { name: 'action items', listPath: '/lifecycle-manager/v1/action-items', deletePath: '/lifecycle-manager/v1/action-items/{id}', queryParam: 'filter[client.id]', idField: 'engagement_action_id' },
+    { name: 'notes', listPath: '/lifecycle-manager/v1/notes', deletePath: '/lifecycle-manager/v1/notes/{id}', queryParam: 'filter[client.id]', idField: 'note_id' },
+    { name: 'assessments', listPath: '/lifecycle-manager/v1/assessments', deletePath: '/lifecycle-manager/v1/assessments/{id}', queryParam: 'filter[client.id]', idField: 'id' },
+    { name: 'goals', listPath: '/lifecycle-manager/v1/goals', deletePath: '/lifecycle-manager/v1/goals/{id}', queryParam: 'filter[client.id]', idField: 'id' },
+    { name: 'contracts', listPath: '/lifecycle-manager/v1/contracts', deletePath: '/lifecycle-manager/v1/contracts/{id}', queryParam: 'filter[client.id]', idField: 'id' }
   ]
 };
 
@@ -38,7 +38,7 @@ function loadConfig() {
   return parsed;
 }
 
-async function apiRequest(baseUrl, token, method, requestPath, query) {
+async function apiRequest(baseUrl, apiKey, method, requestPath, query) {
   const url = new URL(`${baseUrl}${requestPath}`);
   if (query && typeof query === 'object') {
     for (const [key, value] of Object.entries(query)) {
@@ -50,7 +50,7 @@ async function apiRequest(baseUrl, token, method, requestPath, query) {
     method,
     headers: {
       Accept: 'application/json',
-      Authorization: `Bearer ${token}`
+      'x-api-key': apiKey
     }
   });
 
@@ -95,12 +95,30 @@ function extractItems(payload) {
   return [];
 }
 
-async function cleanupResource(baseUrl, token, clientId, resource) {
-  const listData = await apiRequest(baseUrl, token, 'GET', resource.listPath, {
-    [resource.queryParam || 'clientId']: clientId
-  });
+async function listAllResourceItems(baseUrl, apiKey, clientId, resource) {
+  const items = [];
+  let cursor;
 
-  const items = extractItems(listData);
+  do {
+    const query = {
+      [resource.queryParam || 'filter[client.id]']: clientId,
+      page_size: resource.pageSize || 200
+    };
+
+    if (cursor) {
+      query.cursor = cursor;
+    }
+
+    const listData = await apiRequest(baseUrl, apiKey, 'GET', resource.listPath, query);
+    items.push(...extractItems(listData));
+    cursor = listData && typeof listData === 'object' ? listData.next_cursor : undefined;
+  } while (cursor);
+
+  return items;
+}
+
+async function cleanupResource(baseUrl, apiKey, clientId, resource) {
+  const items = await listAllResourceItems(baseUrl, apiKey, clientId, resource);
   const idField = resource.idField || 'id';
   const ids = items
     .map((item) => (item ? item[idField] : undefined))
@@ -109,7 +127,7 @@ async function cleanupResource(baseUrl, token, clientId, resource) {
   let deleted = 0;
   for (const id of ids) {
     const deletePath = (resource.deletePath || `${resource.listPath}/{id}`).replace('{id}', String(id));
-    await apiRequest(baseUrl, token, 'DELETE', deletePath);
+    await apiRequest(baseUrl, apiKey, 'DELETE', deletePath);
     deleted += 1;
   }
 
@@ -117,11 +135,11 @@ async function cleanupResource(baseUrl, token, clientId, resource) {
 }
 
 async function main() {
-  const baseUrl = process.env.SCALEPAD_BASE_URL;
-  const token = process.env.SCALEPAD_API_TOKEN;
+  const baseUrl = process.env.SCALEPAD_BASE_URL || 'https://api.scalepad.com';
+  const apiKey = process.env.SCALEPAD_API_TOKEN || process.env.SCALEPAD_API_KEY;
 
-  if (!baseUrl || !token) {
-    throw new Error('Missing SCALEPAD_BASE_URL or SCALEPAD_API_TOKEN environment variables');
+  if (!apiKey) {
+    throw new Error('Missing SCALEPAD_API_TOKEN or SCALEPAD_API_KEY environment variable');
   }
 
   const config = loadConfig();
@@ -153,7 +171,7 @@ async function main() {
 
     for (const resource of config.resources) {
       process.stdout.write(`Cleaning ${resource.name}... `);
-      const result = await cleanupResource(normalizedBaseUrl, token, clientId, resource);
+      const result = await cleanupResource(normalizedBaseUrl, apiKey, clientId, resource);
       summary.push({ resource: resource.name, ...result });
       console.log(`done (found: ${result.found}, deleted: ${result.deleted})`);
     }

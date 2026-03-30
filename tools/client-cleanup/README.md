@@ -17,14 +17,16 @@ The utility removes, for a selected client:
 ## Requirements
 
 - Node.js 18+ (uses native `fetch`)
-- ScalePad API base URL and token
+- ScalePad API key
 
 ## Environment variables
 
 ```bash
-export SCALEPAD_BASE_URL="https://api.scalepad.example.com"
-export SCALEPAD_API_TOKEN="<your-token>"
+export SCALEPAD_BASE_URL="https://api.scalepad.com"
+export SCALEPAD_API_KEY="<your-api-key>"
 ```
+
+`SCALEPAD_API_TOKEN` is also accepted for compatibility with earlier versions of the script.
 
 Optional:
 
@@ -44,4 +46,4 @@ The app prompts for:
 
 ## Endpoint customization
 
-If your ScalePad endpoints differ from defaults, copy `config.example.json`, update paths/fields, and point `CLIENT_CLEANUP_CONFIG` to your file.
+The default config targets the Lifecycle Manager API and filters records with `filter[client.id]`. If your tenant or workflow needs different paths/fields, copy `config.example.json`, update paths/fields, and point `CLIENT_CLEANUP_CONFIG` to your file.

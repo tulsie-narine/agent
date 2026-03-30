@@ -2,51 +2,51 @@
   "resources": [
     {
       "name": "initiatives",
-      "listPath": "/v1/initiatives",
-      "deletePath": "/v1/initiatives/{id}",
-      "queryParam": "clientId",
+      "listPath": "/lifecycle-manager/v1/initiatives",
+      "deletePath": "/lifecycle-manager/v1/initiatives/{id}",
+      "queryParam": "filter[client.id]",
       "idField": "id"
     },
     {
       "name": "meetings",
-      "listPath": "/v1/meetings",
-      "deletePath": "/v1/meetings/{id}",
-      "queryParam": "clientId",
+      "listPath": "/lifecycle-manager/v1/meetings",
+      "deletePath": "/lifecycle-manager/v1/meetings/{id}",
+      "queryParam": "filter[client.id]",
       "idField": "id"
     },
     {
       "name": "action items",
-      "listPath": "/v1/action-items",
-      "deletePath": "/v1/action-items/{id}",
-      "queryParam": "clientId",
-      "idField": "id"
+      "listPath": "/lifecycle-manager/v1/action-items",
+      "deletePath": "/lifecycle-manager/v1/action-items/{id}",
+      "queryParam": "filter[client.id]",
+      "idField": "engagement_action_id"
     },
     {
       "name": "notes",
-      "listPath": "/v1/notes",
-      "deletePath": "/v1/notes/{id}",
-      "queryParam": "clientId",
-      "idField": "id"
+      "listPath": "/lifecycle-manager/v1/notes",
+      "deletePath": "/lifecycle-manager/v1/notes/{id}",
+      "queryParam": "filter[client.id]",
+      "idField": "note_id"
     },
     {
       "name": "assessments",
-      "listPath": "/v1/assessments",
-      "deletePath": "/v1/assessments/{id}",
-      "queryParam": "clientId",
+      "listPath": "/lifecycle-manager/v1/assessments",
+      "deletePath": "/lifecycle-manager/v1/assessments/{id}",
+      "queryParam": "filter[client.id]",
       "idField": "id"
     },
     {
       "name": "goals",
-      "listPath": "/v1/goals",
-      "deletePath": "/v1/goals/{id}",
-      "queryParam": "clientId",
+      "listPath": "/lifecycle-manager/v1/goals",
+      "deletePath": "/lifecycle-manager/v1/goals/{id}",
+      "queryParam": "filter[client.id]",
       "idField": "id"
     },
     {
       "name": "contracts",
-      "listPath": "/v1/contracts",
-      "deletePath": "/v1/contracts/{id}",
-      "queryParam": "clientId",
+      "listPath": "/lifecycle-manager/v1/contracts",
+      "deletePath": "/lifecycle-manager/v1/contracts/{id}",
+      "queryParam": "filter[client.id]",
       "idField": "id"
     }
   ]
