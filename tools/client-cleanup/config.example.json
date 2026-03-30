@@ -1,0 +1,53 @@
+{
+  "resources": [
+    {
+      "name": "initiatives",
+      "listPath": "/v1/initiatives",
+      "deletePath": "/v1/initiatives/{id}",
+      "queryParam": "clientId",
+      "idField": "id"
+    },
+    {
+      "name": "meetings",
+      "listPath": "/v1/meetings",
+      "deletePath": "/v1/meetings/{id}",
+      "queryParam": "clientId",
+      "idField": "id"
+    },
+    {
+      "name": "action items",
+      "listPath": "/v1/action-items",
+      "deletePath": "/v1/action-items/{id}",
+      "queryParam": "clientId",
+      "idField": "id"
+    },
+    {
+      "name": "notes",
+      "listPath": "/v1/notes",
+      "deletePath": "/v1/notes/{id}",
+      "queryParam": "clientId",
+      "idField": "id"
+    },
+    {
+      "name": "assessments",
+      "listPath": "/v1/assessments",
+      "deletePath": "/v1/assessments/{id}",
+      "queryParam": "clientId",
+      "idField": "id"
+    },
+    {
+      "name": "goals",
+      "listPath": "/v1/goals",
+      "deletePath": "/v1/goals/{id}",
+      "queryParam": "clientId",
+      "idField": "id"
+    },
+    {
+      "name": "contracts",
+      "listPath": "/v1/contracts",
+      "deletePath": "/v1/contracts/{id}",
+      "queryParam": "clientId",
+      "idField": "id"
+    }
+  ]
+}
