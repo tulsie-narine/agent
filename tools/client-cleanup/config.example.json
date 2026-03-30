@@ -1,0 +1,53 @@
+{
+  "resources": [
+    {
+      "name": "initiatives",
+      "listPath": "/lifecycle-manager/v1/initiatives",
+      "deletePath": "/lifecycle-manager/v1/initiatives/{id}",
+      "queryParam": "filter[client.id]",
+      "idField": "id"
+    },
+    {
+      "name": "meetings",
+      "listPath": "/lifecycle-manager/v1/meetings",
+      "deletePath": "/lifecycle-manager/v1/meetings/{id}",
+      "queryParam": "filter[client.id]",
+      "idField": "id"
+    },
+    {
+      "name": "action items",
+      "listPath": "/lifecycle-manager/v1/action-items",
+      "deletePath": "/lifecycle-manager/v1/action-items/{id}",
+      "queryParam": "filter[client.id]",
+      "idField": "engagement_action_id"
+    },
+    {
+      "name": "notes",
+      "listPath": "/lifecycle-manager/v1/notes",
+      "deletePath": "/lifecycle-manager/v1/notes/{id}",
+      "queryParam": "filter[client.id]",
+      "idField": "note_id"
+    },
+    {
+      "name": "assessments",
+      "listPath": "/lifecycle-manager/v1/assessments",
+      "deletePath": "/lifecycle-manager/v1/assessments/{id}",
+      "queryParam": "filter[client.id]",
+      "idField": "id"
+    },
+    {
+      "name": "goals",
+      "listPath": "/lifecycle-manager/v1/goals",
+      "deletePath": "/lifecycle-manager/v1/goals/{id}",
+      "queryParam": "filter[client.id]",
+      "idField": "id"
+    },
+    {
+      "name": "contracts",
+      "listPath": "/lifecycle-manager/v1/contracts",
+      "deletePath": "/lifecycle-manager/v1/contracts/{id}",
+      "queryParam": "filter[client.id]",
+      "idField": "id"
+    }
+  ]
+}
